@@ -101,18 +101,23 @@ function updateThemeIcon(theme) {
     const moonIcon = document.getElementById('moonIcon');
     const themeToggle = document.getElementById('themeToggle');
     
+    // Add animation class for smooth transitions
+    themeToggle.classList.add('theme-changing');
+    setTimeout(() => {
+        themeToggle.classList.remove('theme-changing');
+    }, 700);
+    
     if (theme === 'dark') {
+        // CSS animations will handle the smooth transition
         sunIcon.style.opacity = '0';
-        sunIcon.style.transform = 'rotate(90deg) scale(0.5)';
+        sunIcon.style.transform = 'rotate(180deg) scale(0)';
         moonIcon.style.opacity = '1';
         moonIcon.style.transform = 'rotate(0deg) scale(1)';
-        themeToggle.style.transform = 'rotate(360deg)';
     } else {
         sunIcon.style.opacity = '1';
         sunIcon.style.transform = 'rotate(0deg) scale(1)';
         moonIcon.style.opacity = '0';
-        moonIcon.style.transform = 'rotate(-90deg) scale(0.5)';
-        themeToggle.style.transform = 'rotate(0deg)';
+        moonIcon.style.transform = 'rotate(-180deg) scale(0)';
     }
     
     // Reset transform after animation
@@ -512,21 +517,59 @@ const certificateClose = document.querySelector('.certificate-close');
 // Certificate data - Add your certificate image URLs here
 const certificateData = {
     'Make it Happen Award': {
-        image: 'https://drive.google.com/uc?export=view&id=1JHOKZNN1DZhLog1zDRi1VyasgXXsUoSG',
+        // Use relative paths first - these work best on GitHub Pages
+        image: './images/MakeItHappenAward.pdf',
+        imageAlt: 'images/MakeItHappenAward.pdf',
+        localPaths: [
+            './images/MakeItHappenAward.pdf',
+            'images/MakeItHappenAward.pdf',
+            '/images/MakeItHappenAward.pdf',
+            'https://dhileepkumarn.github.io/portfolio/images/MakeItHappenAward.pdf',
+            'images/make-it-happen-award.pdf',
+            './images/make-it-happen-award.pdf',
+            'images/Make-it-Happen-Award.pdf'
+        ],
         year: '2024',
         event: 'Myntra Quarterly R&R Awards',
-        downloadLink: 'https://drive.google.com/file/d/1JHOKZNN1DZhLog1zDRi1VyasgXXsUoSG/view'
+        downloadLink: './images/MakeItHappenAward.pdf',
+        isPDF: true
     },
     'Chess Tournament Winner': {
+        // Local files for chess tournament certificate and trophy
         images: [
-            'https://drive.google.com/uc?export=view&id=1TKE8mE0_gVc6KIzaL2XBVlseMftIK1HE',
-            'https://drive.google.com/uc?export=view&id=1oaTon2GGkMkaGYk4HYLCtytk8cyEZJq_'
+            './images/MyntraOlympics_chess_certificate.pdf',
+            './images/chess_trophy.jpg'
         ],
+        // Separate paths for PDF and image
+        pdfPaths: [
+            './images/MyntraOlympics_chess_certificate.pdf',
+            'images/MyntraOlympics_chess_certificate.pdf',
+            '/images/MyntraOlympics_chess_certificate.pdf',
+            'https://dhileepkumarn.github.io/portfolio/images/MyntraOlympics_chess_certificate.pdf'
+        ],
+        imagePaths: [
+            './images/chess_trophy.jpg',
+            'images/chess_trophy.jpg',
+            '/images/chess_trophy.jpg',
+            'https://dhileepkumarn.github.io/portfolio/images/chess_trophy.jpg'
+        ],
+        localPaths: [
+            './images/MyntraOlympics_chess_certificate.pdf',
+            './images/chess_trophy.jpg',
+            'images/MyntraOlympics_chess_certificate.pdf',
+            'images/chess_trophy.jpg',
+            '/images/MyntraOlympics_chess_certificate.pdf',
+            '/images/chess_trophy.jpg',
+            'https://dhileepkumarn.github.io/portfolio/images/MyntraOlympics_chess_certificate.pdf',
+            'https://dhileepkumarn.github.io/portfolio/images/chess_trophy.jpg'
+        ],
+        // First file is PDF, second is image
+        isPDFArray: [true, false],
         year: '2024',
         event: 'Myntra Olympics 2024',
         downloadLinks: [
-            'https://drive.google.com/file/d/1TKE8mE0_gVc6KIzaL2XBVlseMftIK1HE/view',
-            'https://drive.google.com/file/d/1oaTon2GGkMkaGYk4HYLCtytk8cyEZJq_/view'
+            './images/MyntraOlympics_chess_certificate.pdf',
+            './images/chess_trophy.jpg'
         ]
     }
 };
@@ -551,25 +594,194 @@ function openCertificateModal(title, year, event) {
         modalImageContainer.innerHTML = '';
         
         images.forEach((imageUrl, index) => {
-            const img = document.createElement('img');
-            img.src = imageUrl;
-            img.alt = `${title} - Image ${index + 1}`;
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.display = 'block';
-            img.style.marginBottom = index < images.length - 1 ? '1rem' : '0';
-            img.style.borderRadius = '10px';
-            modalImageContainer.appendChild(img);
+            // Check if this is a PDF file
+            // Support both isPDF flag and isPDFArray for mixed content
+            let isPDF = false;
+            if (certificate.isPDFArray && Array.isArray(certificate.isPDFArray)) {
+                isPDF = certificate.isPDFArray[index] || false;
+            } else {
+                isPDF = certificate.isPDF || imageUrl.toLowerCase().endsWith('.pdf');
+            }
+            
+            if (isPDF) {
+                // Handle PDF files - show preview card with download/open options
+                // PDFs in iframes are unreliable, so we show a nice preview card instead
+                const pdfContainer = document.createElement('div');
+                pdfContainer.style.cssText = 'width: 100%; margin-bottom: ' + (index < images.length - 1 ? '1.5rem' : '0') + '; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); position: relative; background: var(--bg-white); border: 2px solid var(--border-color);';
+                
+                // Get PDF URL
+                const pdfUrl = imageUrl.includes('#') ? imageUrl.split('#')[0] : imageUrl;
+                
+                // Get absolute URL for Google Docs viewer
+                const absoluteUrl = pdfUrl.startsWith('http') ? pdfUrl : 
+                    (pdfUrl.startsWith('/') ? window.location.origin + pdfUrl : window.location.origin + '/' + pdfUrl);
+                
+                // Create a nice PDF preview card
+                const pdfPreviewCard = document.createElement('div');
+                pdfPreviewCard.style.cssText = 'padding: 4rem 2rem; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05)); min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;';
+                
+                // PDF Icon with animation
+                const pdfIconWrapper = document.createElement('div');
+                pdfIconWrapper.style.cssText = 'margin-bottom: 2rem; position: relative;';
+                pdfIconWrapper.innerHTML = `
+                    <div style="width: 120px; height: 120px; border-radius: 20px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3); animation: float 3s ease-in-out infinite;">
+                        <i class="fas fa-file-pdf" style="font-size: 4rem; color: white;"></i>
+                    </div>
+                `;
+                
+                // Content
+                pdfPreviewCard.innerHTML = `
+                    <div style="width: 120px; height: 120px; border-radius: 20px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3); animation: float 3s ease-in-out infinite;">
+                        <i class="fas fa-file-pdf" style="font-size: 4rem; color: white;"></i>
+                    </div>
+                    <h3 style="color: var(--text-dark); margin-bottom: 1rem; font-size: 1.75rem; font-weight: 700; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        Certificate PDF
+                    </h3>
+                    <p style="color: var(--text-light); margin-bottom: 2.5rem; font-size: 1.05rem; max-width: 500px; line-height: 1.6;">
+                        Click below to view or download the certificate PDF document
+                    </p>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <a href="${pdfUrl}" target="_blank" style="padding: 16px 32px; border-radius: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.75rem; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 1rem; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); transition: all 0.3s ease; border: none;">
+                            <i class="fas fa-external-link-alt"></i> 
+                            <span>Open in New Tab</span>
+                        </a>
+                        <a href="${pdfUrl}" download style="padding: 16px 32px; border-radius: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.75rem; background: var(--bg-white); color: var(--text-dark); border: 2px solid var(--primary-color); font-weight: 600; font-size: 1rem; transition: all 0.3s ease;">
+                            <i class="fas fa-download"></i> 
+                            <span>Download PDF</span>
+                        </a>
+                    </div>
+                    ${absoluteUrl ? `
+                    <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 2px solid var(--border-color); width: 100%; max-width: 400px;">
+                        <p style="color: var(--text-light); margin-bottom: 1rem; font-size: 0.95rem;">Or view using:</p>
+                        <a href="https://docs.google.com/viewer?url=${encodeURIComponent(absoluteUrl)}&embedded=true" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; padding: 10px 20px; border-radius: 8px; background: var(--bg-light); transition: all 0.3s ease;">
+                            <i class="fab fa-google" style="font-size: 1.2rem;"></i> 
+                            <span>Google Docs Viewer</span>
+                        </a>
+                    </div>
+                    ` : ''}
+                `;
+                
+                // Add hover effects via JavaScript
+                const buttons = pdfPreviewCard.querySelectorAll('a');
+                buttons.forEach(btn => {
+                    btn.addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-2px)';
+                        if (this.style.background && this.style.background.includes('gradient')) {
+                            this.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.5)';
+                        } else {
+                            this.style.background = 'var(--bg-light)';
+                        }
+                    });
+                    btn.addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                        if (this.style.background && this.style.background.includes('gradient')) {
+                            this.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.4)';
+                        } else {
+                            this.style.background = 'var(--bg-white)';
+                        }
+                    });
+                });
+                
+                pdfContainer.appendChild(pdfPreviewCard);
+                modalImageContainer.appendChild(pdfContainer);
+                
+            } else {
+                // Handle image files
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = `${title} - Image ${index + 1}`;
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                img.style.display = 'block';
+                img.style.marginBottom = index < images.length - 1 ? '1.5rem' : '0';
+                img.style.borderRadius = '12px';
+                img.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+                img.style.maxWidth = '100%';
+                
+                // Add error handling for image loading
+                let retryCount = 0;
+                const triedPaths = [imageUrl];
+                
+                img.onerror = function() {
+                    console.error('Failed to load image:', imageUrl);
+                    retryCount++;
+                    
+                    // First retry: Try alternative URL format
+                    if (retryCount === 1) {
+                        // Try alternative format from imagesAlt array or imageAlt
+                        const altImages = certificate.imagesAlt || (certificate.imageAlt ? [certificate.imageAlt] : []);
+                        if (altImages[index] && !triedPaths.includes(altImages[index])) {
+                            this.src = altImages[index];
+                            triedPaths.push(altImages[index]);
+                            return;
+                        }
+                        
+                        // Try local paths if available (relative paths first)
+                        if (certificate.localPaths && certificate.localPaths.length > 0) {
+                            for (let localPath of certificate.localPaths) {
+                                // Skip if it's already an absolute URL we tried
+                                if (!localPath.startsWith('http') && !triedPaths.includes(localPath)) {
+                                    this.src = localPath;
+                                    triedPaths.push(localPath);
+                                    return;
+                                }
+                                // Try absolute URL if relative didn't work
+                                if (localPath.startsWith('http') && !triedPaths.includes(localPath)) {
+                                    this.src = localPath;
+                                    triedPaths.push(localPath);
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        // Try extracting file ID and using direct link
+                        const fileId = extractGoogleDriveFileId(imageUrl);
+                        if (fileId) {
+                            const altUrl = `https://drive.google.com/uc?id=${fileId}`;
+                            if (!triedPaths.includes(altUrl)) {
+                                this.src = altUrl;
+                                triedPaths.push(altUrl);
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Second retry: Try different Google Drive URL format
+                    if (retryCount === 2) {
+                        const fileId = extractGoogleDriveFileId(imageUrl);
+                        if (fileId) {
+                            const altUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                            if (!triedPaths.includes(altUrl)) {
+                                this.src = altUrl;
+                                triedPaths.push(altUrl);
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // If all retries fail, show error message
+                    handleCertificateError(img, imageUrl, certificate, index, false);
+                };
+                
+                // Show loading state
+                img.style.opacity = '0';
+                img.style.transition = 'opacity 0.3s ease';
+                img.onload = function() {
+                    this.style.opacity = '1';
+                };
+                
+                modalImageContainer.appendChild(img);
+            }
         });
         
         placeholder.style.display = 'none';
     } else {
         // Keep placeholder if no images
-        if (!imgElement.parentNode.contains(placeholder)) {
+        if (!imgElement || !imgElement.parentNode || !imgElement.parentNode.contains(placeholder)) {
             modalImageContainer.appendChild(placeholder);
         }
         placeholder.style.display = 'block';
-        if (imgElement.parentNode) {
+        if (imgElement && imgElement.parentNode) {
             imgElement.remove();
         }
     }
@@ -587,6 +799,53 @@ function openCertificateModal(title, year, event) {
     
     certificateModal.classList.add('show');
     document.body.style.overflow = 'hidden';
+}
+
+// Helper function to extract Google Drive file ID from various URL formats
+function extractGoogleDriveFileId(url) {
+    if (!url) return null;
+    
+    // Format 1: https://drive.google.com/uc?export=view&id=FILE_ID
+    let match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match) return match[1];
+    
+    // Format 2: https://drive.google.com/file/d/FILE_ID/view
+    match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) return match[1];
+    
+    // Format 3: https://drive.google.com/open?id=FILE_ID
+    match = url.match(/open\?id=([a-zA-Z0-9_-]+)/);
+    if (match) return match[1];
+    
+    return null;
+}
+
+// Helper function to handle certificate loading errors
+function handleCertificateError(element, imageUrl, certificate, index, isPDF) {
+    element.style.display = 'none';
+    const errorDiv = document.createElement('div');
+    errorDiv.style.padding = '2rem';
+    errorDiv.style.textAlign = 'center';
+    errorDiv.style.color = 'var(--text-light)';
+    errorDiv.style.border = '2px dashed var(--border-color)';
+    errorDiv.style.borderRadius = '12px';
+    errorDiv.style.background = 'var(--bg-light)';
+    
+    const downloadLink = certificate.downloadLinks?.[index] || certificate.downloadLink || imageUrl;
+    const icon = isPDF ? 'fa-file-pdf' : 'fa-image';
+    const message = isPDF ? 'PDF could not be loaded' : 'Image could not be loaded';
+    
+    errorDiv.innerHTML = `
+        <i class="fas ${icon}" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; color: var(--text-light);"></i>
+        <p style="margin-bottom: 1rem;">${message}</p>
+        <a href="${downloadLink}" 
+           target="_blank" 
+           style="color: var(--primary-color); text-decoration: underline; margin-top: 0.5rem; display: inline-block; font-weight: 500;">
+            <i class="fas fa-external-link-alt" style="margin-right: 0.5rem;"></i>
+            ${isPDF ? 'Download PDF' : 'Open in Google Drive'}
+        </a>
+    `;
+    element.parentNode.replaceChild(errorDiv, element);
 }
 
 // Close certificate modal
