@@ -1,3 +1,43 @@
+// College Logo Error Handler
+function handleLogoError(img) {
+    // Try alternative paths/formats for college logo
+    const currentSrc = img.src;
+    const altPaths = [
+        'https://raw.githubusercontent.com/DhileepKumarN/portfolio/main/images/nitk-logo.jpg',
+        'https://raw.githubusercontent.com/DhileepKumarN/portfolio/main/images/nitk-logo.jpeg',
+        'https://raw.githubusercontent.com/DhileepKumarN/portfolio/main/images/NITK-logo.png',
+        'https://raw.githubusercontent.com/DhileepKumarN/portfolio/main/images/NITK-logo.jpg',
+        './images/nitk-logo.png',
+        './images/nitk-logo.jpg',
+        './images/nitk-logo.jpeg',
+        'images/nitk-logo.png',
+        'images/nitk-logo.jpg',
+        'images/nitk-logo.jpeg'
+    ];
+    
+    // Check if we've already tried all paths
+    const triedPaths = img.dataset.triedPaths ? JSON.parse(img.dataset.triedPaths) : [];
+    triedPaths.push(currentSrc);
+    
+    let nextPath = null;
+    for (let path of altPaths) {
+        if (!triedPaths.includes(path)) {
+            nextPath = path;
+            break;
+        }
+    }
+    
+    if (nextPath) {
+        img.dataset.triedPaths = JSON.stringify(triedPaths);
+        img.src = nextPath;
+        return;
+    }
+    
+    // Final fallback - hide the logo if not found
+    img.style.display = 'none';
+    img.onerror = null; // Prevent infinite loop
+}
+
 // Image Error Handler
 function handleImageError(img) {
     // Try alternative paths/formats
